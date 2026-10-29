@@ -41,3 +41,16 @@ test('long networks carry more than short ones', () => {
 test('mastodon honours the server limit', () => {
   assert.ok(compose(rel, 'mastodon', 120).length <= 120);
 });
+
+import { fromAtom } from '../src/compose.js';
+test('atom fallback keeps the changes and the tag', () => {
+  const xml = `<feed><entry><updated>2026-10-26T19:24:06Z</updated>
+<link rel="alternate" type="text/html" href="https://github.com/cli/cli/releases/tag/v2.103.3"/><title>GitHub CLI 2.103.3</title>
+<content type="html">&lt;ul&gt;&lt;li&gt;fix(gh auth status): explain tokens with &lt;code&gt;--no-refresh&lt;/code&gt; by &lt;a href=&quot;x&quot;&gt;@babakks&lt;/a&gt; in &lt;a href=&quot;y&quot;&gt;#14815&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;</content></entry>
+<entry><link href="https://github.com/cli/cli/releases/tag/v2.103.2"/><content>&lt;ul&gt;&lt;li&gt;older&lt;/li&gt;&lt;/ul&gt;</content></entry></feed>`;
+  const r = fromAtom(xml, 'cli/cli');
+  assert.equal(r.tag, 'v2.103.3');
+  assert.deepEqual(highlights(r.body), ['fix(gh auth status): explain tokens with --no-refresh']);
+  assert.equal(fromAtom(xml, 'cli/cli', 'v2.103.2').body, '- older');
+  assert.throws(() => fromAtom(xml, 'cli/cli', 'v9'));
+});

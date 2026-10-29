@@ -1,4 +1,4 @@
-import { compose, LIMITS, NEEDS_MEDIA } from './compose.js';
+import { compose, fromAtom, LIMITS, NEEDS_MEDIA } from './compose.js';
 import { PAGE, PRIVACY } from './page.js';
 
 const AUTH = 'https://auth.buffer.com';
@@ -72,16 +72,25 @@ async function gh(path, env) {
   if (env.GITHUB_TOKEN) headers.authorization = 'Bearer ' + env.GITHUB_TOKEN;
   const r = await fetch('https://api.github.com' + path, { headers });
   if (r.status === 404) throw new Error('Not found on GitHub (public repos only): ' + path);
-  if (!r.ok) throw new Error('GitHub ' + r.status);
+  if (!r.ok) throw Object.assign(new Error('GitHub ' + r.status), { status: r.status });
   return r.json();
 }
 
 async function release(env, repo, tag) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '')) throw new Error('Use the form owner/repo');
-  const [info, rel] = await Promise.all([
-    gh(`/repos/${repo}`, env),
-    gh(tag ? `/repos/${repo}/releases/tags/${encodeURIComponent(tag)}` : `/repos/${repo}/releases/latest`, env),
-  ]);
+  let info, rel;
+  try {
+    [info, rel] = await Promise.all([
+      gh(`/repos/${repo}`, env),
+      gh(tag ? `/repos/${repo}/releases/tags/${encodeURIComponent(tag)}` : `/repos/${repo}/releases/latest`, env),
+    ]);
+  } catch (e) {
+    if (e.status !== 403 && e.status !== 429) throw e;
+    // Workers share egress IPs, so the anonymous REST quota runs out; the Atom feed has no such limit.
+    const r = await fetch(`https://github.com/${repo}/releases.atom`, { headers: { 'user-agent': 'release-to-social' } });
+    if (!r.ok) throw new Error('GitHub ' + r.status);
+    return fromAtom(await r.text(), repo, tag);
+  }
   return { repoName: info.full_name, description: info.description || '', tag: rel.tag_name, name: rel.name, url: rel.html_url, body: rel.body || '', publishedAt: rel.published_at };
 }
 

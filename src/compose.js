@@ -69,3 +69,21 @@ export function compose(release, service, maxChars) {
   }
   return cut(`${head} ${url}`, limit);
 }
+
+const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+
+// Fallback when the GitHub REST API rate-limits shared egress IPs: the public releases.atom feed.
+export function fromAtom(xml, repo, tag) {
+  const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map((m) => m[1]);
+  const pick = entries.find((e) => !tag || e.includes(`/releases/tag/${tag}"`)) ;
+  if (!pick) throw new Error(tag ? `Release ${tag} not found in ${repo}` : `${repo} has no releases`);
+  const url = (pick.match(/<link[^>]*href="([^"]+)"/) || [])[1];
+  const html = decode((pick.match(/<content[^>]*>([\s\S]*?)<\/content>/) || [])[1] || '');
+  const body = [...html.matchAll(/<li>([\s\S]*?)<\/li>/g)]
+    .map((m) => '- ' + decode(m[1].replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim()).join('\n');
+  return {
+    repoName: repo, description: '', tag: decodeURIComponent(url.split('/releases/tag/')[1] || ''),
+    name: decode((pick.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || ''), url, body,
+    publishedAt: (pick.match(/<updated>([^<]+)/) || [])[1],
+  };
+}

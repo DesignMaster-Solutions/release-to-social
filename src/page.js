@@ -25,7 +25,7 @@ button:disabled{opacity:.5;cursor:default}a{color:var(--acc)}
 textarea{width:100%;min-height:150px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:8px;font:14px/1.45 ui-monospace,Menlo,monospace}
 .count{font-size:12px;color:var(--muted);text-align:right}.count.over{color:var(--warn);font-weight:700}
 .bar{position:sticky;bottom:0;background:var(--bg);padding:14px 0;display:flex;gap:12px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);margin-top:18px}
-.msg{font-size:14px}.ok{color:var(--acc)}.err{color:var(--warn)}
+.bar[hidden]{display:none}.msg{font-size:14px}.ok{color:var(--acc)}.err{color:var(--warn)}
 footer{margin-top:40px;font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){.post{animation:in .35s ease-out both}@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
 @media (max-width:420px){button,.btn{padding:10px 12px}main{padding:18px 14px 50px}}
