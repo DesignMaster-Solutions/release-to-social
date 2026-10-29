@@ -60,11 +60,11 @@ $('#f').onsubmit=async e=>{e.preventDefault();const [repo,tag]=$('#repo').value.
   try{const services=me?[...new Set(me.channels.map(c=>c.service))]:[];
     const q='?repo='+encodeURIComponent(repo)+(tag?'&tag='+encodeURIComponent(tag):'')+(me?'&services='+services.join(','):'');
     const r=await fetch((me&&me.channels.length?'/api/preview':'/api/demo-release')+q);const j=await r.json();if(!r.ok)throw new Error(j.error);data=j;
-    const rel=j.release;$('#rel').innerHTML='<div class="rel"></div>';$('.rel').textContent=rel.repoName+' '+rel.tag+' · published '+new Date(rel.publishedAt).toLocaleDateString();
+    const rel=j.release;$('#rel').innerHTML='<div class="rel" id="relinfo"></div>';$('#relinfo').textContent=rel.repoName+' '+rel.tag+' · published '+new Date(rel.publishedAt).toLocaleDateString();
     if(me&&me.channels.length){for(const c of me.channels){const p={...j.posts[c.service],service:c.service};$('#grid').append(card(c.id,(c.displayName||c.name)+' · '+(NAMES[c.service]||c.service),c.avatar,p,!p.needsMedia&&!c.isQueuePaused));}
       $('#bar').hidden=false;$('#msg').textContent='';}
     else{for(const [s,p] of Object.entries(j.posts))$('#grid').append(card(s,NAMES[s],null,{...p,service:s},true));
-      $('#bar').hidden=false;$('#save').textContent='Connect Buffer to save';$('#save').onclick=()=>location.href='/login';}
+      $('#bar').hidden=false;$('#save').textContent=me?'Add a channel in Buffer to save':'Connect Buffer to save';$('#save').onclick=()=>location.href=me?'https://publish.buffer.com/channels/connect':'/login';}
   }catch(err){$('#rel').innerHTML='<p class="msg err"></p>';$('#rel p').textContent=err.message;}finally{$('#go').disabled=false;}
 };
 $('#save').onclick=async()=>{const posts=[...document.querySelectorAll('.post')].map(el=>({channelId:el.dataset.key,...el._get()})).filter(p=>p.on).map(({channelId,text})=>({channelId,text}));
