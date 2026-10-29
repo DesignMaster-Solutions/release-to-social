@@ -71,7 +71,7 @@ $('#save').onclick=async()=>{const posts=[...document.querySelectorAll('.post')]
   if(!posts.length)return;$('#save').disabled=true;$('#msg').textContent='Saving '+posts.length+' drafts…';
   try{const r=await fetch('/api/drafts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({posts})});const j=await r.json();if(!r.ok)throw new Error(j.error);
     const ok=j.results.filter(x=>x.ok).length,bad=j.results.filter(x=>!x.ok);
-    $('#msg').className='msg '+(bad.length?'err':'ok');$('#msg').innerHTML=ok+' drafts saved in Buffer. <a href="https://publish.buffer.com/drafts" target="_blank" rel="noopener">Review them</a>'+(bad.length?' · '+bad.length+' failed: '+bad.map(b=>b.error).join('; '):'');
+    $('#msg').className='msg '+(bad.length?'err':'ok');$('#msg').innerHTML=ok+(ok===1?' draft':' drafts')+' saved in Buffer. <a href="https://publish.buffer.com/drafts" target="_blank" rel="noopener">Review them</a>'+(bad.length?' · '+bad.length+' failed: '+bad.map(b=>b.error).join('; '):'');
   }catch(err){$('#msg').className='msg err';$('#msg').textContent=err.message;}finally{$('#save').disabled=false;}
 };
 boot();
