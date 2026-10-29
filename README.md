@@ -5,7 +5,7 @@ Ship a GitHub release, get a ready-to-review post for every Buffer channel.
 Built for **Buffer Commit 2026** (Oct 28 – Nov 13). Live: https://release-to-social.designmaster.workers.dev
 
 ## Demo video
-2-minute walkthrough: https://vimeo.com/1240740333 (also in `docs/demo.mp4`).
+Walkthrough (1:56): https://vimeo.com/1240743529 (also in `docs/demo.mp4`).
 
 ## The problem
 Small dev teams ship a release, then someone has to rewrite the changelog five times: 280 characters for X, 300 for Bluesky, 500 for Threads and Mastodon, a longer version for LinkedIn. It is boring, so it gets skipped, and users never hear about the fix they asked for.
