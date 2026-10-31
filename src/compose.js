@@ -87,3 +87,9 @@ export function fromAtom(xml, repo, tag) {
     publishedAt: (pick.match(/<updated>([^<]+)/) || [])[1],
   };
 }
+
+// CI has nobody to untick a card: skip media-only networks, and paused queues unless the caller names the services.
+export function pickChannels(channels, services) {
+  const want = (services || []).filter(Boolean);
+  return channels.filter((c) => !NEEDS_MEDIA.has(c.service) && (want.length ? want.includes(c.service) : !c.isQueuePaused));
+}

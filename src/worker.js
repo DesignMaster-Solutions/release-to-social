@@ -1,4 +1,4 @@
-import { compose, fromAtom, LIMITS, NEEDS_MEDIA } from './compose.js';
+import { compose, fromAtom, LIMITS, NEEDS_MEDIA, pickChannels } from './compose.js';
 import { PAGE, PRIVACY } from './page.js';
 
 const AUTH = 'https://auth.buffer.com';
@@ -42,8 +42,12 @@ async function tokenRequest(env, params) {
   return { access: t.access_token, refresh: t.refresh_token || null, exp: Date.now() + (t.expires_in || 3600) * 1000 - 60_000 };
 }
 
+// A Buffer personal API key (Settings → API) as a Bearer header is a session too: no cookie, nothing to refresh. CI uses it.
+const bearer = (req) => (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+
 // Returns a valid session (refreshing if needed) and the Set-Cookie to send back, or null.
 async function session(req, env) {
+  if (bearer(req)) return { s: { access: bearer(req) } };
   const s = await open(env, cookies(req).rts || '');
   if (!s) return null;
   if (s.exp > Date.now()) return { s };
@@ -65,6 +69,19 @@ const CHANNELS = `query($org: OrganizationId!) { channels(input: { organizationI
 const CREATE = `mutation($input: CreatePostInput!) { createPost(input: $input) {
   ... on PostActionSuccess { post { id text } }
   ... on MutationError { message } } }`;
+
+async function createPosts(s, posts, mode) {
+  const results = [];
+  for (const { text, ...p } of posts.slice(0, 20)) {
+    const input = { channelId: p.channelId, text: String(text || ''), schedulingType: 'automatic', mode: 'addToQueue' };
+    if (mode === 'draft') input.saveToDraft = true;
+    try {
+      const r = (await gql(s, CREATE, { input })).createPost;
+      results.push(r.post ? { ...p, ok: true, postId: r.post.id } : { ...p, ok: false, error: r.message });
+    } catch (e) { results.push({ ...p, ok: false, error: e.message }); }
+  }
+  return results;
+}
 
 // ---- GitHub (public data only) ----
 async function gh(path, env) {
@@ -130,7 +147,7 @@ export default {
       }
 
       const sess = await session(req, env);
-      if (!sess) return json({ error: 'not_connected' }, 401);
+      if (!sess) return json({ error: 'not_connected', hint: 'Connect Buffer in the browser, or send a Buffer API key (Settings → API) as "Authorization: Bearer <key>".' }, 401);
       const extra = sess.cookie ? { 'set-cookie': sess.cookie } : {};
 
       if (url.pathname === '/api/me') {
@@ -149,16 +166,17 @@ export default {
 
       if (url.pathname === '/api/drafts' && req.method === 'POST') {
         const { posts = [], mode = 'draft' } = await req.json();
-        const results = [];
-        for (const p of posts.slice(0, 20)) {
-          const input = { channelId: p.channelId, text: String(p.text || ''), schedulingType: 'automatic', mode: 'addToQueue' };
-          if (mode === 'draft') input.saveToDraft = true;
-          try {
-            const r = (await gql(sess.s, CREATE, { input })).createPost;
-            results.push(r.post ? { channelId: p.channelId, ok: true, postId: r.post.id } : { channelId: p.channelId, ok: false, error: r.message });
-          } catch (e) { results.push({ channelId: p.channelId, ok: false, error: e.message }); }
-        }
-        return json({ results }, 200, extra);
+        return json({ results: await createPosts(sess.s, posts.map(({ channelId, text }) => ({ channelId, text })), mode) }, 200, extra);
+      }
+
+      // One call does the whole flow for CI: release -> one post per text channel -> Buffer drafts.
+      if (url.pathname === '/api/ci' && req.method === 'POST') {
+        const { repo, tag, services, mode = 'draft' } = await req.json();
+        const rel = await release(env, repo, tag);
+        const org = (await gql(sess.s, `{ account { organizations { id } } }`)).account.organizations?.[0];
+        const channels = org ? (await gql(sess.s, CHANNELS, { org: org.id })).channels : [];
+        const posts = pickChannels(channels, services).map((c) => ({ channelId: c.id, channel: c.displayName || c.name, service: c.service, text: compose(rel, c.service) }));
+        return json({ release: { repo: rel.repoName, tag: rel.tag, url: rel.url }, results: await createPosts(sess.s, posts, mode) }, 200, extra);
       }
 
       return json({ error: 'not_found' }, 404);

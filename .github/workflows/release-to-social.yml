@@ -1,0 +1,9 @@
+# This repo eats its own cooking: every published release becomes Buffer drafts.
+name: Social posts for a release
+on:
+  release:
+    types: [published]
+jobs:
+  social:
+    uses: ./.github/workflows/drafts.yml
+    secrets: inherit

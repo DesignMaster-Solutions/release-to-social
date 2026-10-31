@@ -27,6 +27,7 @@ textarea{width:100%;min-height:150px;resize:vertical;border:1px solid var(--line
 .bar{position:sticky;bottom:0;background:var(--bg);padding:14px 0;display:flex;gap:12px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);margin-top:18px}
 .bar[hidden]{display:none}.msg{font-size:14px}.ok{color:var(--acc)}.err{color:var(--warn)}
 footer{margin-top:40px;font-size:13px;color:var(--muted)}
+.auto{margin-top:34px;border-top:1px solid var(--line);padding-top:18px}.auto summary{cursor:pointer;font-weight:600}.auto ol{padding-left:20px;color:var(--muted)}.auto pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:13px;line-height:1.45}
 @media (prefers-reduced-motion:no-preference){.post{animation:in .35s ease-out both}@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
 @media (max-width:420px){button,.btn{padding:10px 12px}main{padding:18px 14px 50px}}
 </style></head><body><main>
@@ -38,6 +39,24 @@ footer{margin-top:40px;font-size:13px;color:var(--muted)}
 <p class="hint">Optional: add <code>@tag</code> for a specific release, e.g. <code>cli/cli@v2.60.0</code>.</p>
 <div id="rel"></div><div class="grid" id="grid"></div>
 <div class="bar" id="bar" hidden><span class="msg" id="msg"></span><button id="save">Save as Buffer drafts</button></div>
+<details class="auto"><summary>Automate it: drafts on every release, without opening this page</summary>
+<ol>
+<li>In Buffer, go to Settings, API, New Key (account:read, posts:read, posts:write) and copy the key.</li>
+<li>In your GitHub repo, add it as the secret <code>BUFFER_API_KEY</code>.</li>
+<li>Add this workflow. Publish a release, open Buffer, review the drafts.</li>
+</ol>
+<pre># .github/workflows/release-to-social.yml
+name: Social posts for a release
+on:
+  release:
+    types: [published]
+jobs:
+  social:
+    uses: DesignMaster-Solutions/release-to-social/.github/workflows/drafts.yml@main
+    secrets:
+      BUFFER_API_KEY: \${{ secrets.BUFFER_API_KEY }}</pre>
+<p class="hint">The key only passes through: it is sent with each request to <code>POST /api/ci</code> and never stored. Media-only channels and paused queues are skipped.</p>
+</details>
 <footer>Built for Buffer Commit 2026 by <a href="https://www.designmastersolutions.com/?utm_source=release-to-social&utm_medium=referral&utm_campaign=site-footer">Design Master Solutions</a>. Open source: <a href="https://github.com/DesignMaster-Solutions/release-to-social">GitHub</a>. Your Buffer tokens live only in an encrypted cookie in your browser.</footer>
 </main><script>
 const $=s=>document.querySelector(s);let me=null,data=null;

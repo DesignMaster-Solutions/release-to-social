@@ -18,11 +18,35 @@ Small dev teams ship a release, then someone has to rewrite the changelog five t
 
 Channels that need media (Instagram, TikTok, YouTube, Pinterest) are shown but unticked by default.
 
+## Automate it (GitHub Action)
+Every published release becomes Buffer drafts, no browser needed. This repo runs it on itself (`.github/workflows/release-to-social.yml`).
+1. Buffer → Settings → API → **New Key** (account:read, posts:read, posts:write).
+2. Add it to your repo as the secret `BUFFER_API_KEY`.
+3. Add the workflow:
+```yaml
+name: Social posts for a release
+on:
+  release:
+    types: [published]
+jobs:
+  social:
+    uses: DesignMaster-Solutions/release-to-social/.github/workflows/drafts.yml@main
+    secrets:
+      BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+```
+Or call the endpoint from anything that can run curl:
+```bash
+curl -X POST https://release-to-social.designmaster.workers.dev/api/ci \
+  -H "Authorization: Bearer $BUFFER_API_KEY" -H 'Content-Type: application/json' \
+  -d '{"repo":"owner/repo","tag":"v1.2.0"}'        # tag optional: latest release
+```
+The key is used for that request only and never stored. Media-only channels (Instagram, TikTok, YouTube, Pinterest) and paused queues are skipped; pass `"services":["linkedin","bluesky"]` to choose.
+
 ## Buffer API calls
 - `account { email organizations { id name } }`
 - `channels(input: { organizationId })`
 - `createPost(input: { channelId, text, schedulingType: automatic, mode: addToQueue, saveToDraft: true })`
-- OAuth: `auth.buffer.com/auth`, `auth.buffer.com/token` (code exchange and refresh)
+- OAuth: `auth.buffer.com/auth`, `auth.buffer.com/token` (code exchange and refresh); personal API key as Bearer for `/api/ci`
 
 ## Run it
 ```bash
