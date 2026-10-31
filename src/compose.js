@@ -70,6 +70,14 @@ export function compose(release, service, maxChars) {
   return cut(`${head} ${url}`, limit);
 }
 
+// createPost input for one channel. 'draft' (default) saves for review, 'queue' takes the channel's next slot,
+// 'now' publishes at once (CI opt-in; the page itself only ever saves drafts).
+export function postInput(channelId, text, mode = 'draft') {
+  const input = { channelId, text: String(text || ''), schedulingType: 'automatic', mode: mode === 'now' ? 'shareNow' : 'addToQueue' };
+  if (mode === 'draft') input.saveToDraft = true;
+  return input;
+}
+
 const decode = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 
 // Fallback when the GitHub REST API rate-limits shared egress IPs: the public releases.atom feed.

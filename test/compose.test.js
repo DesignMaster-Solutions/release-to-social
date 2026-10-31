@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compose, highlights, measure, LIMITS } from '../src/compose.js';
+import { compose, highlights, measure, LIMITS, postInput } from '../src/compose.js';
 
 const body = `## What's Changed
 * Add dark mode to the dashboard by @ana in https://github.com/o/r/pull/12
@@ -60,4 +60,11 @@ test('CI picks text channels that are not paused, or exactly the services named'
   const ch = [{ id: 1, service: 'linkedin' }, { id: 2, service: 'instagram' }, { id: 3, service: 'twitter', isQueuePaused: true }, { id: 4, service: 'bluesky' }, { id: 5, service: 'startPage' }];
   assert.deepEqual(pickChannels(ch).map((c) => c.id), [1, 4]);
   assert.deepEqual(pickChannels(ch, ['twitter', 'instagram']).map((c) => c.id), [3]);
+});
+
+test('postInput: draft by default, queue and now map to Buffer share modes', () => {
+  assert.deepEqual(postInput('c1', 'hi'), { channelId: 'c1', text: 'hi', schedulingType: 'automatic', mode: 'addToQueue', saveToDraft: true });
+  assert.deepEqual(postInput('c1', 'hi', 'queue'), { channelId: 'c1', text: 'hi', schedulingType: 'automatic', mode: 'addToQueue' });
+  assert.deepEqual(postInput('c1', 'hi', 'now'), { channelId: 'c1', text: 'hi', schedulingType: 'automatic', mode: 'shareNow' });
+  assert.equal(postInput('c1', null).text, '');
 });

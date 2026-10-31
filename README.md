@@ -42,10 +42,12 @@ curl -X POST https://release-to-social.designmaster.workers.dev/api/ci \
 ```
 The key is used for that request only and never stored. Media-only channels (Instagram, TikTok, YouTube, Pinterest) and paused queues are skipped; pass `"services":["linkedin","bluesky"]` to choose.
 
+`mode` picks what happens in Buffer: `draft` (default) saves the posts for review, `queue` adds them to each channel's next slot, `now` publishes them at once. In the workflow: `with: { mode: now }`; in curl: `"mode":"now"`. The web page only ever saves drafts.
+
 ## Buffer API calls
 - `account { email organizations { id name } }`
 - `channels(input: { organizationId })`
-- `createPost(input: { channelId, text, schedulingType: automatic, mode: addToQueue, saveToDraft: true })`
+- `createPost(input: { channelId, text, schedulingType: automatic, mode: addToQueue | shareNow, saveToDraft })`
 - OAuth: `auth.buffer.com/auth`, `auth.buffer.com/token` (code exchange and refresh); personal API key as Bearer for `/api/ci`
 
 ## Run it

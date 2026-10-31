@@ -1,4 +1,4 @@
-import { compose, fromAtom, LIMITS, NEEDS_MEDIA, pickChannels } from './compose.js';
+import { compose, fromAtom, LIMITS, NEEDS_MEDIA, pickChannels, postInput } from './compose.js';
 import { PAGE, PRIVACY } from './page.js';
 
 const AUTH = 'https://auth.buffer.com';
@@ -73,8 +73,7 @@ const CREATE = `mutation($input: CreatePostInput!) { createPost(input: $input) {
 async function createPosts(s, posts, mode) {
   const results = [];
   for (const { text, ...p } of posts.slice(0, 20)) {
-    const input = { channelId: p.channelId, text: String(text || ''), schedulingType: 'automatic', mode: 'addToQueue' };
-    if (mode === 'draft') input.saveToDraft = true;
+    const input = postInput(p.channelId, text, mode);
     try {
       const r = (await gql(s, CREATE, { input })).createPost;
       results.push(r.post ? { ...p, ok: true, postId: r.post.id } : { ...p, ok: false, error: r.message });
@@ -169,7 +168,7 @@ export default {
         return json({ results: await createPosts(sess.s, posts.map(({ channelId, text }) => ({ channelId, text })), mode) }, 200, extra);
       }
 
-      // One call does the whole flow for CI: release -> one post per text channel -> Buffer drafts.
+      // One call does the whole flow for CI: release -> one post per text channel -> Buffer drafts (mode: draft | queue | now).
       if (url.pathname === '/api/ci' && req.method === 'POST') {
         const { repo, tag, services, mode = 'draft' } = await req.json();
         const rel = await release(env, repo, tag);

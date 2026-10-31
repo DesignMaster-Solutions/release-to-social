@@ -3,6 +3,11 @@
 name: Release to Social
 on:
   workflow_call:
+    inputs:
+      mode:
+        description: "draft (default, review in Buffer), queue (channel's next slot) or now (publish at once)"
+        type: string
+        default: draft
     secrets:
       BUFFER_API_KEY:
         description: Buffer personal API key (Buffer → Settings → API → New Key; account:read, posts:read, posts:write)
@@ -16,11 +21,12 @@ jobs:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           REPO: ${{ github.repository }}
           TAG: ${{ github.event.release.tag_name }}
+          MODE: ${{ inputs.mode || 'draft' }}
         run: |
           curl -fsS https://release-to-social.designmaster.workers.dev/api/ci \
             -H "Authorization: Bearer $BUFFER_API_KEY" -H 'Content-Type: application/json' \
-            -d "{\"repo\":\"$REPO\",\"tag\":\"$TAG\"}" > result.json
+            -d "{\"repo\":\"$REPO\",\"tag\":\"$TAG\",\"mode\":\"$MODE\"}" > result.json
           jq '{release, results: [.results[] | {channel, service, ok, postId, error}]}' result.json
           bad=$(jq -r '[.results[] | select(.ok | not) | "\(.channel): \(.error)"] | join("; ")' result.json)
-          echo "$(jq '[.results[] | select(.ok)] | length' result.json) draft(s) saved in Buffer for $(jq -r .release.tag result.json). Review: https://publish.buffer.com/drafts"
+          echo "$(jq '[.results[] | select(.ok)] | length' result.json) post(s) ($MODE) in Buffer for $(jq -r .release.tag result.json). Review: https://publish.buffer.com/drafts"
           [ -z "$bad" ] || { echo "::error::$bad"; exit 1; }
