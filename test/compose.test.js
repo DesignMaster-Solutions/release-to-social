@@ -57,7 +57,7 @@ test('atom fallback keeps the changes and the tag', () => {
 
 import { pickChannels } from '../src/compose.js';
 test('CI picks text channels that are not paused, or exactly the services named', () => {
-  const ch = [{ id: 1, service: 'linkedin' }, { id: 2, service: 'instagram' }, { id: 3, service: 'twitter', isQueuePaused: true }, { id: 4, service: 'bluesky' }];
+  const ch = [{ id: 1, service: 'linkedin' }, { id: 2, service: 'instagram' }, { id: 3, service: 'twitter', isQueuePaused: true }, { id: 4, service: 'bluesky' }, { id: 5, service: 'startPage' }];
   assert.deepEqual(pickChannels(ch).map((c) => c.id), [1, 4]);
   assert.deepEqual(pickChannels(ch, ['twitter', 'instagram']).map((c) => c.id), [3]);
 });

@@ -88,8 +88,9 @@ export function fromAtom(xml, repo, tag) {
   };
 }
 
-// CI has nobody to untick a card: skip media-only networks, and paused queues unless the caller names the services.
+// CI has nobody to untick a card: only networks the composer knows (a Start Page is not one), no media-only
+// networks, and no paused queues unless the caller names the services.
 export function pickChannels(channels, services) {
   const want = (services || []).filter(Boolean);
-  return channels.filter((c) => !NEEDS_MEDIA.has(c.service) && (want.length ? want.includes(c.service) : !c.isQueuePaused));
+  return channels.filter((c) => c.service in LIMITS && !NEEDS_MEDIA.has(c.service) && (want.length ? want.includes(c.service) : !c.isQueuePaused));
 }
