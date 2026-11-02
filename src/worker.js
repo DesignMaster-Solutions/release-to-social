@@ -105,7 +105,11 @@ async function release(env, repo, tag) {
     // Workers share egress IPs, so the anonymous REST quota runs out; the Atom feed has no such limit.
     const r = await fetch(`https://github.com/${repo}/releases.atom`, { headers: { 'user-agent': 'release-to-social' } });
     if (!r.ok) throw new Error('GitHub ' + r.status);
-    return fromAtom(await r.text(), repo, tag);
+    const out = fromAtom(await r.text(), repo, tag);
+    // the repo page lists the topics as /topics/<name> links (no quota either); hashtags are optional
+    const page = await fetch(`https://github.com/${repo}`, { headers: { 'user-agent': 'release-to-social' } }).then((x) => (x.ok ? x.text() : ''), () => '');
+    out.topics = [...new Set([...page.matchAll(/href="\/topics\/([a-z0-9-]+)"/g)].map((m) => m[1]))];
+    return out;
   }
   return { repoName: info.full_name, description: info.description || '', tag: rel.tag_name, name: rel.name, url: rel.html_url, body: rel.body || '', publishedAt: rel.published_at, topics: info.topics || [] };
 }
