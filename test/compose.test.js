@@ -68,3 +68,14 @@ test('postInput: draft by default, queue and now map to Buffer share modes', () 
   assert.deepEqual(postInput('c1', 'hi', 'now'), { channelId: 'c1', text: 'hi', schedulingType: 'automatic', mode: 'shareNow' });
   assert.equal(postInput('c1', null).text, '');
 });
+
+test('repo topics become hashtags when they fit, and are dropped before the limit is crossed', () => {
+  const rel = { repoName: 'acme/widget', tag: 'v2.1.0', url: 'https://github.com/acme/widget/releases/tag/v2.1.0',
+    body: '- Faster sync\n- Dark mode', topics: ['open-source', 'flutter', 'dev tools', 'x'] };
+  const m = compose(rel, 'mastodon');
+  assert.match(m, /#OpenSource #Flutter #DevTools$/);
+  assert.ok(!/#X\b/.test(m), 'one-letter topics are noise');
+  const tiny = compose(rel, 'mastodon', 120);
+  assert.ok(measure(tiny, 'mastodon') <= 120);
+  assert.equal(compose({ ...rel, topics: [] }, 'mastodon').includes('#'), false);
+});

@@ -42,6 +42,8 @@ curl -X POST https://release-to-social.designmaster.workers.dev/api/ci \
 ```
 The key is used for that request only and never stored. Media-only channels (Instagram, TikTok, YouTube, Pinterest) and paused queues are skipped; pass `"services":["linkedin","bluesky"]` to choose.
 
+Repo topics become up to three hashtags (`dev-tools` → `#DevTools`), only in the room the release notes leave.
+
 `mode` picks what happens in Buffer: `draft` (default) saves the posts for review, `queue` adds them to each channel's next slot, `now` publishes them at once. In the workflow: `with: { mode: now }`; in curl: `"mode":"now"`. The web page only ever saves drafts.
 
 ## Buffer API calls

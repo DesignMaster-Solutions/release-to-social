@@ -39,6 +39,11 @@ function cut(s, n) {
   return s.slice(0, Math.max(0, n - 1)).replace(/\s+\S*$/, '') + '…';
 }
 
+// Repo topics as hashtags ("dev tools" -> #DevTools); one-letter topics are noise. At most three.
+export const hashtags = (topics = []) => topics
+  .map((t) => String(t).split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(''))
+  .filter((t) => t.length > 1).slice(0, 3).map((t) => '#' + t);
+
 // Build the post for one service, never over its limit.
 export function compose(release, service, maxChars) {
   const limit = (maxChars || LIMITS[service] || 500);
@@ -47,24 +52,29 @@ export function compose(release, service, maxChars) {
   const head = `${name} ${version} is out`.trim();
   const url = release.url;
   const items = highlights(release.body);
+  const tags = hashtags(release.topics);
   const long = limit >= 1500;
   const bullet = long ? '• ' : '- ';
   const maxItems = long ? 8 : 3;
 
-  const build = (n, itemLen) => {
+  const build = (n, itemLen, nTags) => {
     const picked = items.slice(0, n).map((t) => bullet + cut(t, itemLen));
     const parts = [head + (long ? '.' : ':')];
     if (long && release.description) parts.push(release.description);
     if (picked.length) parts.push(picked.join('\n'));
     if (items.length > n && long) parts.push(`+ ${items.length - n} more changes`);
     parts.push(url);
+    if (nTags) parts.push(tags.slice(0, nTags).join(' '));
     return parts.join('\n\n');
   };
 
+  // the changes come first: hashtags only take room the release notes did not need
   for (let n = Math.min(maxItems, items.length); n >= 0; n--) {
     for (const itemLen of [long ? 200 : 90, 60, 40]) {
-      const text = build(n, itemLen);
-      if (measure(text, service) <= limit) return text;
+      for (let k = tags.length; k >= 0; k--) {
+        const text = build(n, itemLen, k);
+        if (measure(text, service) <= limit) return text;
+      }
     }
   }
   return cut(`${head} ${url}`, limit);

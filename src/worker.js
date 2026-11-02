@@ -107,7 +107,7 @@ async function release(env, repo, tag) {
     if (!r.ok) throw new Error('GitHub ' + r.status);
     return fromAtom(await r.text(), repo, tag);
   }
-  return { repoName: info.full_name, description: info.description || '', tag: rel.tag_name, name: rel.name, url: rel.html_url, body: rel.body || '', publishedAt: rel.published_at };
+  return { repoName: info.full_name, description: info.description || '', tag: rel.tag_name, name: rel.name, url: rel.html_url, body: rel.body || '', publishedAt: rel.published_at, topics: info.topics || [] };
 }
 
 export default {
