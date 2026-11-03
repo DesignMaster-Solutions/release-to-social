@@ -174,8 +174,10 @@ export default {
 
       // One call does the whole flow for CI: release -> one post per text channel -> Buffer drafts (mode: draft | queue | now).
       if (url.pathname === '/api/ci' && req.method === 'POST') {
-        const { repo, tag, services, mode = 'draft' } = await req.json();
-        const rel = await release(env, repo, tag);
+        const { repo, tag, services, mode = 'draft', footer = '' } = await req.json();
+        // footer rides on every post untouched, so it must fit the shortest network next to the link
+        if (typeof footer !== 'string' || footer.length > 200) return json({ error: 'footer must be text of at most 200 characters' }, 400, extra);
+        const rel = { ...(await release(env, repo, tag)), footer };
         const org = (await gql(sess.s, `{ account { organizations { id } } }`)).account.organizations?.[0];
         const channels = org ? (await gql(sess.s, CHANNELS, { org: org.id })).channels : [];
         const posts = pickChannels(channels, services).map((c) => ({ channelId: c.id, channel: c.displayName || c.name, service: c.service, text: compose(rel, c.service) }));

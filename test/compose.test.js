@@ -79,3 +79,17 @@ test('repo topics become hashtags when they fit, and are dropped before the limi
   assert.ok(measure(tiny, 'mastodon') <= 120);
   assert.equal(compose({ ...rel, topics: [] }, 'mastodon').includes('#'), false);
 });
+
+test('a footer (e.g. the contest mention) survives on every network, after the link, and never pushes past the limit', () => {
+  const footer = 'Built in public for Buffer Commit 2026.';
+  const withFoot = { ...rel, topics: ['dev tools', 'buffer'], footer };
+  for (const s of Object.keys(LIMITS)) {
+    const t = compose(withFoot, s);
+    assert.ok(t.includes(footer), `${s} lost the footer`);
+    assert.ok(t.indexOf(footer) > t.indexOf(rel.url), `${s} footer before the link`);
+    assert.ok(measure(t, s) <= LIMITS[s], `${s} over the limit`);
+  }
+  // the footer costs release notes on short networks, never the other way round
+  assert.ok(compose(withFoot, 'twitter').length <= LIMITS.twitter);
+  assert.equal(compose({ ...rel, footer: '   ' }, 'bluesky'), compose(rel, 'bluesky'));
+});

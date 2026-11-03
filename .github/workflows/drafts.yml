@@ -8,6 +8,10 @@ on:
         description: "draft (default, review in Buffer), queue (channel's next slot) or now (publish at once)"
         type: string
         default: draft
+      footer:
+        description: "a line kept on every post, never cut (e.g. a contest mention or a disclosure; up to 200 characters)"
+        type: string
+        default: ""
     secrets:
       BUFFER_API_KEY:
         description: Buffer personal API key (Buffer → Settings → API → New Key; account:read, posts:read, posts:write)
@@ -22,10 +26,13 @@ jobs:
           REPO: ${{ github.repository }}
           TAG: ${{ github.event.release.tag_name }}
           MODE: ${{ inputs.mode || 'draft' }}
+          FOOTER: ${{ inputs.footer }}
         run: |
+          jq -n --arg repo "$REPO" --arg tag "$TAG" --arg mode "$MODE" --arg footer "$FOOTER" \
+            '{repo: $repo, tag: $tag, mode: $mode, footer: $footer}' > body.json
           curl -fsS https://release-to-social.designmaster.workers.dev/api/ci \
             -H "Authorization: Bearer $BUFFER_API_KEY" -H 'Content-Type: application/json' \
-            -d "{\"repo\":\"$REPO\",\"tag\":\"$TAG\",\"mode\":\"$MODE\"}" > result.json
+            -d @body.json > result.json
           jq '{release, results: [.results[] | {channel, service, ok, postId, error}]}' result.json
           bad=$(jq -r '[.results[] | select(.ok | not) | "\(.channel): \(.error)"] | join("; ")' result.json)
           echo "$(jq '[.results[] | select(.ok)] | length' result.json) post(s) ($MODE) in Buffer for $(jq -r .release.tag result.json). Review: https://publish.buffer.com/drafts"

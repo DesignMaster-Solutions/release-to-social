@@ -46,6 +46,8 @@ Repo topics become up to three hashtags (`dev-tools` → `#DevTools`), only in t
 
 `mode` picks what happens in Buffer: `draft` (default) saves the posts for review, `queue` adds them to each channel's next slot, `now` publishes them at once. In the workflow: `with: { mode: now }`; in curl: `"mode":"now"`. The web page only ever saves drafts.
 
+`footer` is one line kept on every post and never cut, after the link (a contest mention, a disclosure, a sign-off; up to 200 characters). On short networks it costs release notes, never the other way round. This repo's own workflow uses it so each release post says it is part of Buffer Commit: `with: { footer: "Built in public for Buffer Commit 2026." }`; in curl: `"footer":"..."`.
+
 ## Buffer API calls
 - `account { email organizations { id name } }`
 - `channels(input: { organizationId })`

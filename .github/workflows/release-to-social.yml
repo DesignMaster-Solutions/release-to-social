@@ -6,4 +6,6 @@ on:
 jobs:
   social:
     uses: ./.github/workflows/drafts.yml
+    with:
+      footer: "Built in public for Buffer Commit 2026."
     secrets: inherit

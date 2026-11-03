@@ -53,6 +53,8 @@ export function compose(release, service, maxChars) {
   const url = release.url;
   const items = highlights(release.body);
   const tags = hashtags(release.topics);
+  // a fixed line the caller needs on every post (contest mention, disclosure): it costs release notes, never the reverse
+  const foot = String(release.footer || '').trim();
   const long = limit >= 1500;
   const bullet = long ? '• ' : '- ';
   const maxItems = long ? 8 : 3;
@@ -64,6 +66,7 @@ export function compose(release, service, maxChars) {
     if (picked.length) parts.push(picked.join('\n'));
     if (items.length > n && long) parts.push(`+ ${items.length - n} more changes`);
     parts.push(url);
+    if (foot) parts.push(foot);
     if (nTags) parts.push(tags.slice(0, nTags).join(' '));
     return parts.join('\n\n');
   };
@@ -77,7 +80,8 @@ export function compose(release, service, maxChars) {
       }
     }
   }
-  return cut(`${head} ${url}`, limit);
+  const bare = foot ? `${head} ${url}\n\n${foot}` : '';
+  return bare && measure(bare, service) <= limit ? bare : cut(`${head} ${url}`, limit);
 }
 
 // createPost input for one channel. 'draft' (default) saves for review, 'queue' takes the channel's next slot,
