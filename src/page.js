@@ -56,6 +56,7 @@ jobs:
     secrets:
       BUFFER_API_KEY: \${{ secrets.BUFFER_API_KEY }}</pre>
 <p class="hint">The key only passes through: it is sent with each request to <code>POST /api/ci</code> and never stored. Media-only channels and paused queues are skipped.</p>
+<p class="hint">Options, under <code>with:</code> in the job: <code>mode: queue</code> takes each channel's next slot and <code>mode: now</code> publishes at once (drafts are the default); <code>footer: "Part of Buffer Commit 2026"</code> adds one line that every post keeps, after the link, even on X.</p>
 </details>
 <footer>Built for Buffer Commit 2026 by <a href="https://www.designmastersolutions.com/?utm_source=release-to-social&utm_medium=referral&utm_campaign=site-footer">Design Master Solutions</a>. Open source: <a href="https://github.com/DesignMaster-Solutions/release-to-social">GitHub</a>. Your Buffer tokens live only in an encrypted cookie in your browser.</footer>
 </main><script>
