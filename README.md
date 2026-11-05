@@ -4,6 +4,15 @@ Ship a GitHub release, get a ready-to-review post for every Buffer channel.
 
 Built for **Buffer Commit 2026** (Oct 28 – Nov 13). Live: https://release-to-social.designmaster.workers.dev
 
+## Built during Buffer Commit
+All of it was written in the build window (first commit Oct 29). By release:
+- **v0.1.0** (Oct 29): the web app. Buffer OAuth 2.0 with PKCE, one post per connected channel fitted to that network's limit, edit in place, save as Buffer drafts.
+- **v0.2.0** (Oct 30): `/api/ci` and a reusable GitHub workflow. Every published release becomes Buffer drafts, no browser.
+- **v0.3.0** (Oct 31): `mode`: `draft` (default), `queue` for the next slot, or `now` through Buffer's shareNow.
+- **v0.4.0** (Nov 3): repo topics become hashtags in the room the notes leave, and a `footer` line kept on every post and never cut.
+
+This repo runs its own workflow (`.github/workflows/release-to-social.yml`), and our build-in-public posts on LinkedIn went out through `/api/ci` with `mode: now`.
+
 ## Demo video
 Walkthrough (1:56): https://vimeo.com/1240743529 (also in `docs/demo.mp4`).
 
