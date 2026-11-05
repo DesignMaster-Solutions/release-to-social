@@ -14,7 +14,8 @@ All of it was written in the build window (first commit Oct 29). By release:
 This repo runs its own workflow (`.github/workflows/release-to-social.yml`), and our build-in-public posts on LinkedIn went out through `/api/ci` with `mode: now`.
 
 ## Demo video
-Walkthrough (1:56): https://vimeo.com/1240743529 (also in `docs/demo.mp4`).
+- **Real screen recording, end to end against the live Buffer API (1:32):** https://youtu.be/qKEE5hIQLBc, also at https://vimeo.com/1240743529 and in `docs/demo-v2.mp4`. The web app (OAuth, one post per channel with its counter, edit, save as drafts, the draft in Buffer) and the GitHub Action: a release published in the labeled demo repo [release-to-social-demo](https://github.com/DesignMaster-Solutions/release-to-social-demo) runs the workflow ([run](https://github.com/DesignMaster-Solutions/release-to-social-demo/actions/runs/41943946169)) and the draft lands in Buffer with the footer and the topic hashtags.
+- First walkthrough, Oct 29 (v0.1 only): `docs/demo.mp4`.
 
 ## The problem
 Small dev teams ship a release, then someone has to rewrite the changelog five times: 280 characters for X, 300 for Bluesky, 500 for Threads and Mastodon, a longer version for LinkedIn. It is boring, so it gets skipped, and users never hear about the fix they asked for.
