@@ -87,7 +87,7 @@ async function gh(path, env) {
   const headers = { 'user-agent': 'release-to-social', accept: 'application/vnd.github+json' };
   if (env.GITHUB_TOKEN) headers.authorization = 'Bearer ' + env.GITHUB_TOKEN;
   const r = await fetch('https://api.github.com' + path, { headers });
-  if (r.status === 404) throw new Error('Not found on GitHub (public repos only): ' + path);
+  if (r.status === 404) throw Object.assign(new Error('Not found on GitHub (public repos only): ' + path), { status: 404 });
   if (!r.ok) throw Object.assign(new Error('GitHub ' + r.status), { status: r.status });
   return r.json();
 }
@@ -98,8 +98,10 @@ async function release(env, repo, tag) {
   try {
     [info, rel] = await Promise.all([
       gh(`/repos/${repo}`, env),
-      gh(tag ? `/repos/${repo}/releases/tags/${encodeURIComponent(tag)}` : `/repos/${repo}/releases/latest`, env),
+      // the repo exists but has nothing published: say that, not "not found" (a git tag alone is not a release)
+      gh(tag ? `/repos/${repo}/releases/tags/${encodeURIComponent(tag)}` : `/repos/${repo}/releases/latest`, env).catch((e) => (e.status === 404 ? null : Promise.reject(e))),
     ]);
+    if (!rel) throw new Error(tag ? `Release ${tag} not found in ${repo}` : `${repo} has no published release yet (a git tag alone is not a GitHub release)`);
   } catch (e) {
     if (e.status !== 403 && e.status !== 429) throw e;
     // Workers share egress IPs, so the anonymous REST quota runs out; the Atom feed has no such limit.

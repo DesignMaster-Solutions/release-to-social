@@ -19,15 +19,19 @@ export function measure(text, service) {
 // Release body (markdown) -> plain bullet lines, most important first.
 export function highlights(body = '') {
   const lines = [];
+  let skipNested = false; // the package list under a dropped "Updated dependencies" goes with it
   for (const raw of body.split(/\r?\n/)) {
     const l = raw.trim();
     const m = l.match(/^[-*+]\s+(.*)$/) || l.match(/^\d+[.)]\s+(.*)$/);
     if (!m) continue;
+    if (/^\s/.test(raw) && skipNested) continue;
+    skipNested = /^updated dependencies/i.test(m[1]);
+    if (skipNested) continue;
     const t = m[1]
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')    // [text](url) -> text
       .replace(/[`*_~]/g, '')
       .replace(/\s+by\s+@[\w-]+\s+in\s+\S+$/i, '') // GitHub auto-notes suffix
-      .replace(/\s*\(#\d+\)$/, '')
+      .replace(/\s*\(#\d+(?:,\s*#\d+)*(?:\s+by\s+@[\w-]+(?:(?:,|\s+and)\s+@[\w-]+)*)?\)$/, '') // (#1), (#1, #2), (#1 by @a and @b)
       .trim();
     if (t && !/^full changelog/i.test(t)) lines.push(t);
   }
@@ -40,9 +44,15 @@ function cut(s, n) {
 }
 
 // Repo topics as hashtags ("dev tools" -> #DevTools); one-letter topics are noise. At most three.
-export const hashtags = (topics = []) => topics
-  .map((t) => String(t).split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(''))
-  .filter((t) => t.length > 1).slice(0, 3).map((t) => '#' + t);
+// Topics that name the project (found in the repo name or description) go first: next.js is #Nextjs #React, not #Blog #Browser.
+export const hashtags = (topics = [], hint = '') => {
+  const norm = (w) => String(w).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const words = new Set(String(hint).split(/[\s/]+/).map(norm));
+  const named = (t) => words.has(norm(t));
+  return [...topics.filter(named), ...topics.filter((t) => !named(t))]
+    .map((t) => String(t).split(/[^a-z0-9]+/i).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(''))
+    .filter((t) => t.length > 1).slice(0, 3).map((t) => '#' + t);
+};
 
 // Build the post for one service, never over its limit.
 export function compose(release, service, maxChars) {
@@ -52,7 +62,7 @@ export function compose(release, service, maxChars) {
   const head = `${name} ${version} is out`.trim();
   const url = release.url;
   const items = highlights(release.body);
-  const tags = hashtags(release.topics);
+  const tags = hashtags(release.topics, `${release.repoName} ${release.description || ''}`);
   // a fixed line the caller needs on every post (contest mention, disclosure): it costs release notes, never the reverse
   const foot = String(release.footer || '').trim();
   const long = limit >= 1500;

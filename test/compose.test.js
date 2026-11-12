@@ -93,3 +93,22 @@ test('a footer (e.g. the contest mention) survives on every network, after the l
   assert.ok(compose(withFoot, 'twitter').length <= LIMITS.twitter);
   assert.equal(compose({ ...rel, footer: '   ' }, 'bluesky'), compose(rel, 'bluesky'));
 });
+
+// The three below come from running the live app on real repos on Nov 12 (next.js, react, astro).
+test('reference suffixes seen in real release notes are dropped: (#1, #2) and (#1 by @a and @b)', () => {
+  const h = highlights('- Pin Tailwind to 4.3.3 in create-next-app and tests (#101061, #101176)\n- Improve transport protocol (#37845 by @unstubbable and @eps1lon)\n- Keep (#12) in the middle of a line');
+  assert.deepEqual(h, ['Pin Tailwind to 4.3.3 in create-next-app and tests', 'Improve transport protocol', 'Keep (#12) in the middle of a line']);
+});
+
+test('changesets "Updated dependencies" and its nested package list are not news', () => {
+  const h = highlights('- Fix hydration of slots\n- Updated dependencies []:\n  - @astrojs/vue-renderer@0.1.1\n  - @astrojs/internal@2.0.0\n- Faster dev start');
+  assert.deepEqual(h, ['Fix hydration of slots', 'Faster dev start']);
+});
+
+test('hashtags prefer the topics that name the project over the first ones in the list', () => {
+  const topics = ['blog', 'browser', 'compiler', 'components', 'nextjs', 'node', 'react', 'vercel'];
+  const t = compose({ repoName: 'vercel/next.js', tag: 'v16.4.6', url: 'https://github.com/vercel/next.js/releases/tag/v16.4.6', body: '- One fix', description: 'The React Framework', topics }, 'linkedin');
+  assert.match(t, /#Nextjs #React #Vercel$/);
+  // with nothing to go on, the order GitHub gives stays
+  assert.match(compose({ repoName: 'acme/app', tag: 'v1', url: 'https://github.com/acme/app/releases/tag/v1', body: '', topics: ['blog', 'browser'] }, 'linkedin'), /#Blog #Browser$/);
+});

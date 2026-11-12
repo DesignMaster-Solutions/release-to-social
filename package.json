@@ -1,6 +1,6 @@
 {
   "name": "release-to-social",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Ship a GitHub release, get a ready-to-review post for every Buffer channel. Buffer Commit 2026.",
   "type": "module",
   "scripts": { "test": "node --test test/", "deploy": "wrangler deploy" },

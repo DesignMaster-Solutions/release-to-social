@@ -10,6 +10,7 @@ All of it was written in the build window (first commit Oct 29). By release:
 - **v0.2.0** (Oct 30): `/api/ci` and a reusable GitHub workflow. Every published release becomes Buffer drafts, no browser.
 - **v0.3.0** (Oct 31): `mode`: `draft` (default), `queue` for the next slot, or `now` through Buffer's shareNow.
 - **v0.4.0** (Nov 3): repo topics become hashtags in the room the notes leave, and a `footer` line kept on every post and never cut.
+- **v0.4.1** (Nov 12): fixes from running the live app on real repos (next.js, react, astro, linux). `(#1, #2)` and `(#1 by @a and @b)` suffixes and changesets' "Updated dependencies" lists are dropped, hashtags prefer the topics that name the project (`#Nextjs #React`, not `#Blog #Browser`), and a repo with tags but no release says so.
 
 This repo runs its own workflow (`.github/workflows/release-to-social.yml`), and our build-in-public posts on LinkedIn went out through `/api/ci` with `mode: now`.
 
