@@ -112,3 +112,19 @@ test('hashtags prefer the topics that name the project over the first ones in th
   // with nothing to go on, the order GitHub gives stays
   assert.match(compose({ repoName: 'acme/app', tag: 'v1', url: 'https://github.com/acme/app/releases/tag/v1', body: '', topics: ['blog', 'browser'] }, 'linkedin'), /#Blog #Browser$/);
 });
+
+// Found on the live page on Nov 12 with withastro/astro: @astrojs/vue@7.1.5 only bumps dependencies.
+test('a release with nothing to list ends its headline with a full stop and says what the project is', () => {
+  const rel = { repoName: 'withastro/astro', tag: '@astrojs/vue@7.1.5', url: 'https://github.com/withastro/astro/releases/tag/%40astrojs/vue%407.1.5', body: '### Patch Changes\n\n- Updated dependencies []:\n  - @astrojs/vue-renderer@0.1.1', description: 'The web framework for content-driven websites.', topics: ['astro'] };
+  for (const s of Object.keys(LIMITS)) {
+    const t = compose(rel, s);
+    assert.ok(!/is out:/.test(t), `${s} headline ends in a colon with nothing after it`);
+    assert.ok(t.includes(rel.description), `${s} lost the description`);
+    assert.ok(measure(t, s) <= LIMITS[s], `${s} over the limit`);
+  }
+  // a description too long for a short network is dropped, the colon still does not dangle
+  const x = compose({ ...rel, description: 'word '.repeat(80) }, 'twitter');
+  assert.ok(!/is out:/.test(x) && measure(x, 'twitter') <= LIMITS.twitter);
+  // with changes to list, short networks keep the colon and skip the description
+  assert.match(compose({ ...rel, body: '- Fix slots' }, 'bluesky'), /is out:\n\n- Fix slots/);
+});

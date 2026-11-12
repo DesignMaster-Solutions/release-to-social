@@ -69,10 +69,12 @@ export function compose(release, service, maxChars) {
   const bullet = long ? '• ' : '- ';
   const maxItems = long ? 8 : 3;
 
-  const build = (n, itemLen, nTags) => {
+  // short networks say what the project is only when the release has no change to list (a dependency bump)
+  const say = release.description && (long || !items.length);
+  const build = (n, itemLen, nTags, desc) => {
     const picked = items.slice(0, n).map((t) => bullet + cut(t, itemLen));
-    const parts = [head + (long ? '.' : ':')];
-    if (long && release.description) parts.push(release.description);
+    const parts = [head + (long || !picked.length ? '.' : ':')]; // a colon only with something after it
+    if (desc) parts.push(release.description);
     if (picked.length) parts.push(picked.join('\n'));
     if (items.length > n && long) parts.push(`+ ${items.length - n} more changes`);
     parts.push(url);
@@ -82,11 +84,13 @@ export function compose(release, service, maxChars) {
   };
 
   // the changes come first: hashtags only take room the release notes did not need
-  for (let n = Math.min(maxItems, items.length); n >= 0; n--) {
-    for (const itemLen of [long ? 200 : 90, 60, 40]) {
-      for (let k = tags.length; k >= 0; k--) {
-        const text = build(n, itemLen, k);
-        if (measure(text, service) <= limit) return text;
+  for (const desc of say ? [true, false] : [false]) {
+    for (let n = Math.min(maxItems, items.length); n >= 0; n--) {
+      for (const itemLen of [long ? 200 : 90, 60, 40]) {
+        for (let k = tags.length; k >= 0; k--) {
+          const text = build(n, itemLen, k, desc);
+          if (measure(text, service) <= limit) return text;
+        }
       }
     }
   }
