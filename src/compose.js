@@ -38,6 +38,9 @@ export function highlights(body = '') {
   return lines;
 }
 
+// a leading @ would tag an unrelated account (scoped package, GitHub handle); pkg@1.2.3 and /@scope in a URL are not mentions
+const plain = (s) => String(s || '').replace(/(^|[^\w/])@(?=\w)/g, '$1');
+
 function cut(s, n) {
   if (s.length <= n) return s;
   return s.slice(0, Math.max(0, n - 1)).replace(/\s+\S*$/, '') + '…';
@@ -59,9 +62,10 @@ export function compose(release, service, maxChars) {
   const limit = (maxChars || LIMITS[service] || 500);
   const name = release.repoName;
   const version = release.tag || release.name || '';
-  const head = `${name} ${version} is out`.trim();
+  const head = plain(`${name} ${version} is out`.trim());
   const url = release.url;
-  const items = highlights(release.body);
+  const items = highlights(release.body).map(plain);
+  const about = plain(release.description);
   const tags = hashtags(release.topics, `${release.repoName} ${release.description || ''}`);
   // a fixed line the caller needs on every post (contest mention, disclosure): it costs release notes, never the reverse
   const foot = String(release.footer || '').trim();
@@ -70,11 +74,11 @@ export function compose(release, service, maxChars) {
   const maxItems = long ? 8 : 3;
 
   // short networks say what the project is only when the release has no change to list (a dependency bump)
-  const say = release.description && (long || !items.length);
+  const say = about && (long || !items.length);
   const build = (n, itemLen, nTags, desc) => {
     const picked = items.slice(0, n).map((t) => bullet + cut(t, itemLen));
     const parts = [head + (long || !picked.length ? '.' : ':')]; // a colon only with something after it
-    if (desc) parts.push(release.description);
+    if (desc) parts.push(about);
     if (picked.length) parts.push(picked.join('\n'));
     if (items.length > n && long) parts.push(`+ ${items.length - n} more changes`);
     parts.push(url);

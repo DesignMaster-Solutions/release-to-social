@@ -128,3 +128,15 @@ test('a release with nothing to list ends its headline with a full stop and says
   // with changes to list, short networks keep the colon and skip the description
   assert.match(compose({ ...rel, body: '- Fix slots' }, 'bluesky'), /is out:\n\n- Fix slots/);
 });
+
+// A scoped package (@astrojs/vue) or a contributor handle in the notes would tag an unrelated account on X, Mastodon, Bluesky.
+test('a scoped package or a GitHub handle never becomes a mention, the footer and the link are left alone', () => {
+  const rel = { repoName: 'withastro/astro', tag: '@astrojs/vue@7.1.5', url: 'https://github.com/withastro/astro/releases/tag/@astrojs/vue@7.1.5', body: '- Fix slots in @astrojs/vue, thanks @alice\n- (@bob) typo', description: 'By @withastro.', topics: ['astro'], footer: 'Drafted with @buffer.' };
+  for (const s of Object.keys(LIMITS)) {
+    const t = compose(rel, s);
+    const rest = t.replace(rel.url, '').replace(rel.footer, '');
+    assert.ok(!/(^|[^\w/])@\w/.test(rest), `${s} would mention someone: ${rest}`);
+    assert.ok(t.includes(rel.url) && t.includes(rel.footer), `${s} lost the link or the footer`);
+    assert.ok(t.includes('astrojs/vue@7.1.5 is out'), `${s} lost the version`);
+  }
+});
