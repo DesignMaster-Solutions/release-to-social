@@ -96,7 +96,7 @@ test('a footer (e.g. the contest mention) survives on every network, after the l
 
 // The three below come from running the live app on real repos on Nov 12 (next.js, react, astro).
 test('reference suffixes seen in real release notes are dropped: (#1, #2) and (#1 by @a and @b)', () => {
-  const h = highlights('- Pin Tailwind to 4.3.3 in create-next-app and tests (#101061, #101176)\n- Improve transport protocol (#37845 by @unstubbable and @eps1lon)\n- Keep (#12) in the middle of a line');
+  const h = highlights('- Pin Tailwind to 4.3.3 in create-next-app and tests (#101061, #101176) (#101307)\n- Improve transport protocol (#37845 by @unstubbable and @eps1lon)\n- Keep (#12) in the middle of a line');
   assert.deepEqual(h, ['Pin Tailwind to 4.3.3 in create-next-app and tests', 'Improve transport protocol', 'Keep (#12) in the middle of a line']);
 });
 

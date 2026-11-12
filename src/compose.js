@@ -31,7 +31,7 @@ export function highlights(body = '') {
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')    // [text](url) -> text
       .replace(/[`*_~]/g, '')
       .replace(/\s+by\s+@[\w-]+\s+in\s+\S+$/i, '') // GitHub auto-notes suffix
-      .replace(/\s*\(#\d+(?:,\s*#\d+)*(?:\s+by\s+@[\w-]+(?:(?:,|\s+and)\s+@[\w-]+)*)?\)$/, '') // (#1), (#1, #2), (#1 by @a and @b)
+      .replace(/(?:\s*\(#\d+(?:,\s*#\d+)*(?:\s+by\s+@[\w-]+(?:(?:,|\s+and)\s+@[\w-]+)*)?\))+$/, '') // (#1), (#1, #2) (#3), (#1 by @a and @b)
       .trim();
     if (t && !/^full changelog/i.test(t)) lines.push(t);
   }
