@@ -29,11 +29,12 @@ export function highlights(body = '') {
     if (skipNested) continue;
     const t = m[1]
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')    // [text](url) -> text
-      .replace(/[`*_~]/g, '')
+      .replace(/[`*~]/g, '')
+      .replace(/(^|\W)_+|_+(?!\w)/g, '$1')      // _emphasis_ goes, snake_case names stay whole
       .replace(/\s+by\s+@[\w-]+\s+in\s+\S+$/i, '') // GitHub auto-notes suffix
-      .replace(/(?:\s*\(#\d+(?:,\s*#\d+)*(?:\s+by\s+@[\w-]+(?:(?:,|\s+and)\s+@[\w-]+)*)?\))+$/, '') // (#1), (#1, #2) (#3), (#1 by @a and @b)
+      .replace(/(?:\s*\((?:[0-9a-f]{7,40}|#\d+(?:,\s*#\d+)*(?:\s+by\s+@[\w-]+(?:(?:,|\s+and)\s+@[\w-]+)*)?)\))+$/, '') // (#1), (#1, #2) (#3), (#1 by @a and @b), (a3b28e8)
       .trim();
-    if (t && !/^full changelog/i.test(t)) lines.push(t);
+    if (t && !/^full changelog/i.test(t) && !/^@[\w-]+$/.test(t)) lines.push(t); // a bare handle is the thank-you list, not a change
   }
   return lines;
 }
@@ -61,7 +62,10 @@ export const hashtags = (topics = [], hint = '') => {
 export function compose(release, service, maxChars) {
   const limit = (maxChars || LIMITS[service] || 500);
   const name = release.repoName;
-  const version = release.tag || release.name || '';
+  const raw = release.tag || release.name || '';
+  // svelte@5.57.3 and bun-v1.4.4 repeat the repo; another package of a monorepo (create-vite@9.0.0) keeps its name
+  const short = String(name || '').split('/').pop();
+  const version = raw.toLowerCase().startsWith(short.toLowerCase()) && /^[@_/-]v?\d/.test(raw.slice(short.length)) ? raw.slice(short.length + 1) : raw;
   const head = plain(`${name} ${version} is out`.trim());
   const url = release.url;
   const items = highlights(release.body).map(plain);

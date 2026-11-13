@@ -145,3 +145,22 @@ test('the web page lists only channels Buffer lets an app post to (a Start Page 
   const channels = [{ id: 'a', service: 'linkedin' }, { id: 'b', service: 'startPage' }, { id: 'c', service: 'instagram' }];
   assert.deepEqual(postable(channels).map((c) => c.id), ['a', 'c']);
 });
+
+test('real notes (vite, bun, tailwind, svelte): commit hashes, contributor lists, snake_case names and a tag that repeats the repo', () => {
+  const notes = `### Bug Fixes
+* **build:** keep magicString in transform hook meta ([#24012](https://github.com/vitejs/vite/issues/24012)) ([a3b28e8](https://github.com/vitejs/vite/commit/a3b28e8))
+- Ensure it loads with \`NAPI_RS_FORCE_WASI=error\` and _really_ fast
+
+### Thanks to 2 contributors!
+- [@0xh3x](https://github.com/0xh3x)
+- @alii`;
+  assert.deepEqual(highlights(notes), [
+    'build: keep magicString in transform hook meta',
+    'Ensure it loads with NAPI_RS_FORCE_WASI=error and really fast',
+  ]);
+  const rel = (repoName, tag) => ({ repoName, tag, url: 'https://github.com/o/r', body: '' });
+  assert.ok(compose(rel('sveltejs/svelte', 'svelte@5.57.3'), 'twitter').startsWith('sveltejs/svelte 5.57.3 is out'));
+  assert.ok(compose(rel('oven-sh/bun', 'bun-v1.4.4'), 'twitter').startsWith('oven-sh/bun v1.4.4 is out'));
+  // another package of a monorepo keeps its name
+  assert.ok(compose(rel('withastro/astro', '@astrojs/vue@7.1.5'), 'twitter').startsWith('withastro/astro astrojs/vue@7.1.5 is out'));
+});
