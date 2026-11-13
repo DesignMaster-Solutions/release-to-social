@@ -1,4 +1,4 @@
-import { compose, fromAtom, LIMITS, NEEDS_MEDIA, pickChannels, postInput } from './compose.js';
+import { compose, fromAtom, LIMITS, NEEDS_MEDIA, pickChannels, postable, postInput } from './compose.js';
 import { PAGE, PRIVACY } from './page.js';
 
 const AUTH = 'https://auth.buffer.com';
@@ -158,7 +158,8 @@ export default {
       if (url.pathname === '/api/me') {
         const d = await gql(sess.s, `{ account { email organizations { id name } } }`);
         const orgs = d.account.organizations || [];
-        const channels = orgs.length ? (await gql(sess.s, CHANNELS, { org: orgs[0].id })).channels : [];
+        // a Start Page comes back as a channel, but Buffer refuses posts to it: no card for it
+        const channels = orgs.length ? postable((await gql(sess.s, CHANNELS, { org: orgs[0].id })).channels) : [];
         return json({ email: d.account.email, organization: orgs[0] || null, channels }, 200, extra);
       }
 

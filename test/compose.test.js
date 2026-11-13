@@ -55,7 +55,7 @@ test('atom fallback keeps the changes and the tag', () => {
   assert.throws(() => fromAtom(xml, 'cli/cli', 'v9'));
 });
 
-import { pickChannels } from '../src/compose.js';
+import { pickChannels, postable } from '../src/compose.js';
 test('CI picks text channels that are not paused, or exactly the services named', () => {
   const ch = [{ id: 1, service: 'linkedin' }, { id: 2, service: 'instagram' }, { id: 3, service: 'twitter', isQueuePaused: true }, { id: 4, service: 'bluesky' }, { id: 5, service: 'startPage' }];
   assert.deepEqual(pickChannels(ch).map((c) => c.id), [1, 4]);
@@ -139,4 +139,9 @@ test('a scoped package or a GitHub handle never becomes a mention, the footer an
     assert.ok(t.includes(rel.url) && t.includes(rel.footer), `${s} lost the link or the footer`);
     assert.ok(t.includes('astrojs/vue@7.1.5 is out'), `${s} lost the version`);
   }
+});
+
+test('the web page lists only channels Buffer lets an app post to (a Start Page is not one)', () => {
+  const channels = [{ id: 'a', service: 'linkedin' }, { id: 'b', service: 'startPage' }, { id: 'c', service: 'instagram' }];
+  assert.deepEqual(postable(channels).map((c) => c.id), ['a', 'c']);
 });
